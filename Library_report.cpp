@@ -67,7 +67,7 @@ int main(){
         cout<<"WELCOME TO LIBRARY MANAGEMENT SYSTEM...!"<<endl;
         cout<<"1. ISSUE BOOKS"<<endl;
         cout<<"2. RETURN BOOKS"<<endl;
-        cout<<"3. EXIT"<<endl;
+        cout<<"3. EXIT "<<endl;
         cout<<"ENTER YOUR CHOICE: ";
         cin>>choice;
         switch(choice){
