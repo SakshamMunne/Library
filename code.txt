@@ -1,0 +1,341 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+// Class representing an individual book
+class Book {
+public:
+    int id;
+    string title;
+    bool isIssued;
+
+    Book(int bookId, string bookTitle) {
+        id = bookId;
+        title = bookTitle;
+        isIssued = false;
+    }
+};
+
+// Class representing a user and their attributes
+class User {
+public:
+    int id;
+    string name;
+    vector<int> issuedBookIds; // Keeps track of books held by this user
+
+    User(int userId, string userName) {
+        id = userId;
+        name = userName;
+    }
+};
+
+// Main Library System managing books, users, and admin privileges
+class LibrarySystem {
+private:
+    vector<Book> books;
+    vector<User> users;
+
+    // Default admin credentials
+    const string adminEmail = "admin@library.com";
+    const string adminPassword = "admin123";
+
+public:
+    LibrarySystem() {
+        // Pre-loaded initial books for demonstration
+        books.push_back(Book(101, "C++ Programming"));
+        books.push_back(Book(102, "Data Structures and Algorithms"));
+        books.push_back(Book(103, "Database Management"));
+    }
+
+    // Admin authentication
+    bool adminLogin() {
+        string email, password;
+        cout << "\n--- ADMIN LOGIN ---\n";
+        cout << "Enter Admin Email: ";
+        cin >> email;
+        cout << "Enter Password: ";
+        cin >> password;
+
+        if (email == adminEmail && password == adminPassword) {
+            cout << "Login Successful!\n";
+            return true;
+        } else {
+            cout << "Invalid Email or Password!\n";
+            return false;
+        }
+    }
+
+    // Admin functionality: Add a new book
+    void addBook() {
+        int id;
+        string title;
+        cout << "Enter New Book ID: ";
+        cin >> id;
+
+        // Check for duplicate Book ID
+        for (const auto &b : books) {
+            if (b.id == id) {
+                cout << "Error: Book ID already exists!\n";
+                return;
+            }
+        }
+
+        cin.ignore(); // Clear buffer
+        cout << "Enter Book Title: ";
+        getline(cin, title);
+
+        books.push_back(Book(id, title));
+        cout << "Book added successfully!\n";
+    }
+
+    // View all books in system
+    void displayAllBooks() {
+        cout << "\n--- BOOK CATALOG ---\n";
+        if (books.empty()) {
+            cout << "No books currently in system.\n";
+            return;
+        }
+        for (const auto &b : books) {
+            cout << "ID: " << b.id << " | Title: " << b.title 
+                 << " | Status: " << (b.isIssued ? "Issued" : "Available") << endl;
+        }
+    }
+
+    // View all registered users and their held books
+    void displayAllUsers() {
+        cout << "\n--- USER RECORDS ---\n";
+        if (users.empty()) {
+            cout << "No registered users yet.\n";
+            return;
+        }
+        for (const auto &u : users) {
+            cout << "User ID: " << u.id << " | Name: " << u.name << endl;
+            cout << "  Issued Book IDs: ";
+            if (u.issuedBookIds.empty()) {
+                cout << "None";
+            } else {
+                for (int bId : u.issuedBookIds) {
+                    cout << bId << " ";
+                }
+            }
+            cout << endl;
+        }
+    }
+
+    // Find or register user by ID
+    User* getOrRegisterUser() {
+        int userId;
+        cout << "Enter Your User ID: ";
+        cin >> userId;
+
+        for (auto &u : users) {
+            if (u.id == userId) {
+                cout << "Welcome back, " << u.name << "!\n";
+                return &u;
+            }
+        }
+
+        // Register new user if ID not found
+        string name;
+        cin.ignore();
+        cout << "User ID not found. Enter your Name to register: ";
+        getline(cin, name);
+        users.push_back(User(userId, name));
+        cout << "Registration successful!\n";
+        return &users.back();
+    }
+
+    // Issue multiple books
+    void issueBooks(User &user) {
+        displayAllBooks();
+
+        int days;
+        cout << "\nEnter days you want to issue books (Max 14 days): ";
+        cin >> days;
+        if (days <= 0 || days > 14) {
+            cout << "Error: Cannot issue books for more than 14 days or invalid days!\n";
+            return;
+        }
+
+        int count;
+        cout << "How many books do you want to issue? ";
+        cin >> count;
+
+        if (count <= 0) {
+            cout << "Invalid count!\n";
+            return;
+        }
+
+        for (int i = 0; i < count; i++) {
+            int bookId;
+            cout << "Enter Book ID " << i + 1 << ": ";
+            cin >> bookId;
+
+            bool found = false;
+            for (auto &b : books) {
+                if (b.id == bookId) {
+                    found = true;
+                    if (b.isIssued) {
+                        cout << "Book ID " << bookId << " is already issued to someone else!\n";
+                    } else {
+                        b.isIssued = true;
+                        user.issuedBookIds.push_back(bookId);
+                        cout << "Book '" << b.title << "' issued successfully for " << days << " days!\n";
+                    }
+                    break;
+                }
+            }
+            if (!found) {
+                cout << "Book ID " << bookId << " does not exist!\n";
+            }
+        }
+    }
+
+    // Return multiple books and calculate overdue fine
+    void returnBooks(User &user) {
+        if (user.issuedBookIds.empty()) {
+            cout << "You have no books currently issued!\n";
+            return;
+        }
+
+        int days;
+        cout << "Enter the total days you kept the books: ";
+        cin >> days;
+
+        int finePerBook = 0;
+        if (days > 14) {
+            finePerBook = (days - 14) * 5; // Fine rate: Rs. 5 per day past 14 days
+            cout << "Overdue by " << (days - 14) << " days. Fine per overdue book: Rs. " << finePerBook << endl;
+        }
+
+        int count;
+        cout << "How many books do you want to return? ";
+        cin >> count;
+
+        int totalFine = 0;
+        for (int i = 0; i < count; i++) {
+            int bookId;
+            cout << "Enter Book ID to return (" << i + 1 << "/" << count << "): ";
+            cin >> bookId;
+
+            // Find book in user's list
+            auto it = find(user.issuedBookIds.begin(), user.issuedBookIds.end(), bookId);
+            if (it != user.issuedBookIds.end()) {
+                user.issuedBookIds.erase(it);
+
+                // Mark book as available in library
+                for (auto &b : books) {
+                    if (b.id == bookId) {
+                        b.isIssued = false;
+                        break;
+                    }
+                }
+                totalFine += finePerBook;
+                cout << "Book ID " << bookId << " returned successfully!\n";
+            } else {
+                cout << "You do not have Book ID " << bookId << " issued under your account!\n";
+            }
+        }
+
+        if (totalFine > 0) {
+            cout << "\nTotal fine payable: Rs. " << totalFine << endl;
+        } else {
+            cout << "No fine incurred. Thank you for returning on time!\n";
+        }
+    }
+
+    // View books currently held by logged-in user
+    void viewHeldBooks(const User &user) {
+        cout << "\n--- Books Currently Held by " << user.name << " ---\n";
+        if (user.issuedBookIds.empty()) {
+            cout << "You have no issued books.\n";
+            return;
+        }
+        for (int bId : user.issuedBookIds) {
+            for (const auto &b : books) {
+                if (b.id == bId) {
+                    cout << "Book ID: " << b.id << " | Title: " << b.title << endl;
+                }
+            }
+        }
+    }
+};
+
+int main() {
+    LibrarySystem sys;
+    int mainChoice;
+
+    do {
+        cout << "\n====================================\n";
+        cout << "    LIBRARY MANAGEMENT SYSTEM       \n";
+        cout << "====================================\n";
+        cout << "1. User Portal\n";
+        cout << "2. Admin Portal\n";
+        cout << "3. Exit\n";
+        cout << "Enter Choice: ";
+        cin >> mainChoice;
+
+        switch (mainChoice) {
+            case 1: { // USER PORTAL
+                User* currentUser = sys.getOrRegisterUser();
+                int userChoice;
+                do {
+                    cout << "\n--- USER MENU (" << currentUser->name << ") ---\n";
+                    cout << "1. View Available Books\n";
+                    cout << "2. Issue Books\n";
+                    cout << "3. Return Books\n";
+                    cout << "4. View My Held Books\n";
+                    cout << "5. Back to Main Menu\n";
+                    cout << "Enter Choice: ";
+                    cin >> userChoice;
+
+                    switch (userChoice) {
+                        case 1: sys.displayAllBooks(); break;
+                        case 2: sys.issueBooks(*currentUser); break;
+                        case 3: sys.returnBooks(*currentUser); break;
+                        case 4: sys.viewHeldBooks(*currentUser); break;
+                        case 5: cout << "Logging out of User Portal...\n"; break;
+                        default: cout << "Invalid choice!\n";
+                    }
+                } while (userChoice != 5);
+                break;
+            }
+
+            case 2: { // ADMIN PORTAL
+                if (sys.adminLogin()) {
+                    int adminChoice;
+                    do {
+                        cout << "\n--- ADMIN MENU ---\n";
+                        cout << "1. Add New Book\n";
+                        cout << "2. View All Books\n";
+                        cout << "3. View All User Records\n";
+                        cout << "4. Back to Main Menu\n";
+                        cout << "Enter Choice: ";
+                        cin >> adminChoice;
+
+                        switch (adminChoice) {
+                            case 1: sys.addBook(); break;
+                            case 2: sys.displayAllBooks(); break;
+                            case 3: sys.displayAllUsers(); break;
+                            case 4: cout << "Logging out of Admin Portal...\n"; break;
+                            default: cout << "Invalid choice!\n";
+                        }
+                    } while (adminChoice != 4);
+                }
+                break;
+            }
+
+            case 3:
+                cout << "Exiting system. Goodbye!\n";
+                break;
+
+            default:
+                cout << "Invalid choice !\n";
+        }
+    } while (mainChoice != 3);
+
+    return 0;
+}
