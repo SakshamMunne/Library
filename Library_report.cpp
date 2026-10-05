@@ -41,9 +41,6 @@ class LibrarySystem
 private:
     vector<Book> books;
     vector<User> users;
-    // string adminEmail = "admin123@gmail.com";
-    // string adminPassword = "admin@123";
-
 public:
     LibrarySystem()
     {
@@ -51,11 +48,9 @@ public:
         books.push_back(Book(102, "Data Structure and Algorithm"));
         books.push_back(Book(103, "Database Management"));
     }
-    // bool adminLogin=false;
 
     void displayAllBooks()
     {
-        // cout<<"Displaying All Books...\n";
         cout << "\n------ BOOK CATALOG -----\n";
         if (books.empty())
         {
@@ -71,14 +66,21 @@ public:
 
     void issueBooks(User &user)
     {
+        int UnissuedBooksCount=0;
+        for(const auto &b:books){
+            if(b.isIssued==false){
+                UnissuedBooksCount++;
+            }
+        }
+        cout<<"Total No. of UnIssued Books : "<<UnissuedBooksCount;
         displayAllBooks();
-        cout << "Issue Books...\n";
+        cout << "\nIssue Books...\n";
         int bookId;
 
         int count;
         cout<<"How many books do you want to issue? ";
         cin>>count;
-        if(count<=0)
+        if(count<=0 || count>UnissuedBooksCount)
         {
             cout<<"Invalid count!\n";
             return;
@@ -165,7 +167,6 @@ public:
             if (it != user.issuedBookIds.end()) {
                 user.issuedBookIds.erase(it);
 
-                // Mark book as available in library
                 for (auto &b : books) {
                     if (b.id == bookId) {
                         b.isIssued = false;
@@ -203,7 +204,6 @@ public:
 
     void addBook()
     {
-        // cout<<"Adding Book...\n";
         int id;
         string title;
         cout << "Enter New Book ID :";
@@ -253,7 +253,6 @@ public:
 
     void displayAllUsers()
     {
-        // cout<<"Display All Users...\n";
         cout << "\n ----- USER RECORD ----- \n";
         if (users.empty())
         {
@@ -277,28 +276,7 @@ public:
             }
             cout << endl;
         }
-    }
-
-    // bool adminLogin()
-    // {
-    //     string email, password;
-    //     cout << "\n --- ADMIN LOGIN --- \n";
-    //     cout << "Enter Admin Email : ";
-    //     cin >> email;
-    //     cout << "Enter Admin Password : ";
-    //     cin >> password;
-
-    //     if (email == adminEmail && password == adminPassword)
-    //     {
-    //         cout << "Login Successfull\n";
-    //         return true;
-    //     }
-    //     else
-    //     {
-    //         cout << "Invalid Email or Password\n";
-    //         return false;
-    //     }
-    // }
+    }    
 };
 
 int main()
